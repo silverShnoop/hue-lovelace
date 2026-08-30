@@ -154,14 +154,19 @@ class HueSceneRail extends HTMLElement {
     this._hass.callService("scene", "turn_on", { entity_id: entity });
   }
 
-  _toggleAuto() {
-    if (this._autoActive()) {
-      // There is no "deactivate" for a Hue smart scene; picking any other
-      // scene drops out of it, and turning the room off stops it outright.
-      this._hass.callService("light", "turn_off", { entity_id: this._config.light });
-    } else if (this._config.smart_scene) {
-      this._activateScene(this._config.smart_scene);
-    }
+  /**
+   * Toggle the room.
+   *
+   * Hue exposes no "deactivate" for an adaptive scene, so the smart scene is
+   * not a toggle — it is simply the scene you reach for first. Off belongs on
+   * a control of its own.
+   */
+  _togglePower() {
+    this._hass.callService("light", "toggle", { entity_id: this._config.light });
+  }
+
+  _roomOn() {
+    return this._hass?.states?.[this._config.light]?.state === "on";
   }
 
   _applyBrightness(pct) {
@@ -220,6 +225,7 @@ class HueSceneRail extends HTMLElement {
           overflow: hidden;
         }
         .chip {
+          position: relative;
           display: inline-flex;
           align-items: center;
           gap: 6px;
@@ -243,18 +249,51 @@ class HueSceneRail extends HTMLElement {
           transition: max-width 160ms ease, opacity 140ms ease;
         }
         .chip.expanded .chip-name { max-width: 120px; opacity: 1; }
-        .chip.expanded { border-color: var(--primary-text-color); }
-        .chip.auto { position: relative; }
-        .chip.auto.expanded { border-color: var(--primary-text-color); }
+        .chip.active { border-color: var(--primary-text-color); }
+        /* The adaptive scene is the one to reach for first, so it always
+           carries its label and sits apart from the presets. */
+        .chip.auto { font-weight: 500; margin-right: 4px; }
+        .chip.auto::after {
+          content: "";
+          position: absolute;
+          right: -6px;
+          width: 1px;
+          height: 20px;
+          background: var(--primary-text-color);
+          opacity: 0.18;
+        }
+        .chips { position: relative; }
+        .power {
+          position: relative;
+          flex: 0 0 auto;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 34px;
+          height: 34px;
+          padding: 0;
+          border: none;
+          border-radius: 50%;
+          background: var(--card-background-color);
+          color: var(--secondary-text-color);
+          cursor: pointer;
+          transition: color 120ms ease;
+        }
+        .power ha-icon { --mdc-icon-size: 20px; }
+        .power.on { color: var(--state-light-active-color, var(--primary-color)); }
       </style>
       <div class="rail">
         <div class="fill"></div>
+        <button class="power" data-kind="power" title="Toggle room">
+          <ha-icon icon="mdi:power"></ha-icon>
+        </button>
         <div class="label"></div>
         <div class="chips"></div>
       </div>
     `;
 
     this._railEl = root.querySelector(".rail");
+    this._powerEl = root.querySelector(".power");
     this._fillEl = root.querySelector(".fill");
     this._labelEl = root.querySelector(".label");
     this._chipsEl = root.querySelector(".chips");
@@ -274,7 +313,7 @@ class HueSceneRail extends HTMLElement {
     const startPct = this._currentBrightnessPct();
     this._drag = {
       x: event.clientX,
-      chip: event.target.closest(".chip"),
+      chip: event.target.closest(".chip, .power"),
       moved: false,
       startPct: startPct ?? 50,
       targets: this._litLights(),
@@ -319,7 +358,7 @@ class HueSceneRail extends HTMLElement {
       }
     } else if (drag.chip) {
       const kind = drag.chip.dataset.kind;
-      if (kind === "auto") this._toggleAuto();
+      if (kind === "power") this._togglePower();
       else if (drag.chip.dataset.entity) this._activateScene(drag.chip.dataset.entity);
     }
 
@@ -371,9 +410,10 @@ class HueSceneRail extends HTMLElement {
           const bg = gradient.length > 1
             ? `linear-gradient(90deg, ${gradient.join(", ")})`
             : "var(--card-background-color)";
-          const fg = autoOn ? this._chipColours(gradient[0] ?? "#ffffff") : "var(--secondary-text-color)";
+          const fg = gradient.length ? this._chipColours(gradient[0]) : "var(--primary-text-color)";
           return `
-            <button class="chip auto ${autoOn ? "expanded" : ""}" data-kind="auto"
+            <button class="chip auto expanded ${autoOn ? "active" : ""}" data-kind="scene"
+                    data-entity="${this._config.smart_scene}"
                     style="background:${bg};color:${fg}" title="${entry.label}">
               <ha-icon icon="${entry.icon}"></ha-icon>
               <span class="chip-name">${entry.label}</span>
@@ -386,7 +426,7 @@ class HueSceneRail extends HTMLElement {
         const bg = colour ?? "var(--card-background-color)";
         const fg = colour ? this._chipColours(colour) : "var(--secondary-text-color)";
         return `
-          <button class="chip ${active ? "expanded" : ""}" data-kind="scene"
+          <button class="chip ${active ? "expanded active" : ""}" data-kind="scene"
                   data-entity="${item.entity}"
                   style="background:${bg};color:${fg}" title="${name}">
             ${item.icon ? `<ha-icon icon="${item.icon}"></ha-icon>` : ""}
@@ -399,6 +439,9 @@ class HueSceneRail extends HTMLElement {
       this._chipsEl.innerHTML = html;
       this._lastHtml = html;
     }
+
+    this._powerEl.classList.toggle("on", this._roomOn());
+    this._powerEl.hidden = this._config.power === false;
 
     const pct = this._currentBrightnessPct();
     this._fillEl.style.width = pct === null ? "0%" : `${pct}%`;

@@ -12,12 +12,14 @@ which core Hue surfaces.
 
 One row per room, about 46px tall.
 
-- The adaptive all-day scene (Hue's "Golden hours" and friends) is a **toggle**
-  at the left, rendered as a gradient across the whole day's palette.
+- A **power button** at the left toggles the room.
+- The adaptive all-day scene (Hue's "Golden hours" and friends) leads the rail,
+  rendered as a gradient across the whole day's palette and always carrying its
+  label, so it reads as the one to reach for first. It is a button, not a
+  toggle — see the note below.
 - Every other scene is a **button**, an icon on that scene's own colour.
-- Whichever scene is live **expands to show its name**; the rest stay icon-only.
-  The expansion *is* the highlight, so the row always reads as "this is what is
-  on" without a separate indicator.
+- Whichever scene is live is **ringed**, and presets **expand to show their
+  name** while they are the active one; the rest stay icon-only.
 - **Dragging the row dims**, and only touches the bulbs the scene left on — not
   the room group, which would drag along every bulb the scene deliberately
   turned off.
@@ -38,8 +40,9 @@ configured, so the rail follows whatever the bridge reports.
 | `smart_scene` | | The adaptive scene. Omit for no Auto toggle. |
 | `active_scene_sensor` | | `sensor.<room>_active_scene`. Drives the highlight. |
 | `schedule_sensor` | | `sensor.<room>_<scene>_schedule`. Supplies scene colours. |
-| `auto_label` | | Label on the Auto chip. Default `Auto`. |
-| `auto_icon` | | Icon on the Auto chip. Default `mdi:brightness-auto`. |
+| `auto_label` | | Label on the adaptive chip. Default `Auto`. |
+| `auto_icon` | | Icon on the adaptive chip. Default `mdi:brightness-auto`. |
+| `power` | | Set `false` to hide the power button. Default `true`. |
 | `dim` | | Set `false` to disable drag-to-dim. Default `true`. |
 
 ### Example
@@ -63,9 +66,10 @@ scenes:
 
 ### Notes
 
-Hue exposes no "deactivate" service for an adaptive scene, so tapping Auto
-while it is on turns the room off. Dropping out of Auto by picking any other
-scene works the way the bridge already behaves.
+Hue exposes no "deactivate" service for an adaptive scene, so the adaptive
+scene is deliberately **not** a toggle — there is nothing coherent for its off
+state to do. You drop out of it by picking any other scene, which is how the
+bridge already behaves, and you turn the room off with the power button.
 
 Dimming is relative to where the drag started, so touching the row never jumps
 the brightness. Movement under 8px counts as a tap.
