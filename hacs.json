@@ -1,0 +1,6 @@
+{
+  "name": "Hue Lovelace",
+  "filename": "hue-lovelace.js",
+  "render_readme": true,
+  "homeassistant": "2026.8.0"
+}
