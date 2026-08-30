@@ -189,9 +189,9 @@ class HueSceneRail extends HTMLElement {
           position: relative;
           display: flex;
           align-items: center;
-          gap: 10px;
+          gap: 8px;
           min-height: 46px;
-          padding: 4px 10px;
+          padding: 4px 8px;
           box-sizing: border-box;
           border-radius: 24px;
           background: var(--secondary-background-color);
@@ -210,27 +210,30 @@ class HueSceneRail extends HTMLElement {
         .rail.dragging .fill { transition: none; }
         .label {
           position: relative;
-          flex: 0 0 auto;
+          flex: 0 1 auto;
+          min-width: 0;
           font-size: 14px;
           font-weight: 500;
           color: var(--primary-text-color);
           white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
         }
         .chips {
           position: relative;
           display: flex;
           align-items: center;
-          gap: 6px;
+          gap: 4px;
           margin-left: auto;
-          overflow: hidden;
+          flex: 0 0 auto;
         }
         .chip {
           position: relative;
           display: inline-flex;
           align-items: center;
           gap: 6px;
-          height: 36px;
-          padding: 0 9px;
+          height: 32px;
+          padding: 0 7px;
           border: 2px solid transparent;
           border-radius: 18px;
           background: var(--card-background-color);
@@ -241,14 +244,14 @@ class HueSceneRail extends HTMLElement {
           white-space: nowrap;
           transition: border-color 120ms ease, padding 140ms ease;
         }
-        .chip ha-icon { --mdc-icon-size: 20px; flex: 0 0 auto; }
+        .chip ha-icon { --mdc-icon-size: 18px; flex: 0 0 auto; }
         .chip .chip-name {
           max-width: 0;
           overflow: hidden;
           opacity: 0;
           transition: max-width 160ms ease, opacity 140ms ease;
         }
-        .chip.expanded .chip-name { max-width: 120px; opacity: 1; }
+        .chip.expanded .chip-name { max-width: 92px; opacity: 1; }
         .chip.active { border-color: var(--primary-text-color); }
         /* The adaptive scene is the one to reach for first, so it always
            carries its label and sits apart from the presets. */
@@ -269,8 +272,8 @@ class HueSceneRail extends HTMLElement {
           display: inline-flex;
           align-items: center;
           justify-content: center;
-          width: 34px;
-          height: 34px;
+          width: 32px;
+          height: 32px;
           padding: 0;
           border: none;
           border-radius: 50%;
@@ -279,7 +282,7 @@ class HueSceneRail extends HTMLElement {
           cursor: pointer;
           transition: color 120ms ease;
         }
-        .power ha-icon { --mdc-icon-size: 20px; }
+        .power ha-icon { --mdc-icon-size: 19px; }
         .power.on { color: var(--state-light-active-color, var(--primary-color)); }
       </style>
       <div class="rail">
