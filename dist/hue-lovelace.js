@@ -189,7 +189,7 @@ class HueSceneRail extends HTMLElement {
           position: relative;
           display: flex;
           align-items: center;
-          gap: 8px;
+          gap: 6px;
           min-height: 46px;
           padding: 4px 8px;
           box-sizing: border-box;
@@ -199,20 +199,25 @@ class HueSceneRail extends HTMLElement {
           touch-action: pan-y;
           user-select: none;
         }
-        .fill {
+        /* Brightness reads as a track along the bottom edge rather than a
+           ghosted wash: the drag has to advertise itself or nobody finds it. */
+        .track {
           position: absolute;
-          inset: 0 auto 0 0;
+          left: 0;
+          bottom: 0;
+          height: 3px;
           background: var(--primary-text-color);
-          opacity: 0.07;
+          opacity: 0.4;
           pointer-events: none;
           transition: width 120ms ease-out;
         }
-        .rail.dragging .fill { transition: none; }
+        .rail.dragging .track { transition: none; opacity: 0.75; }
         .label {
           position: relative;
           flex: 0 1 auto;
           min-width: 0;
-          font-size: 14px;
+          max-width: 34%;
+          font-size: 13px;
           font-weight: 500;
           color: var(--primary-text-color);
           white-space: nowrap;
@@ -223,7 +228,7 @@ class HueSceneRail extends HTMLElement {
           position: relative;
           display: flex;
           align-items: center;
-          gap: 4px;
+          gap: 3px;
           margin-left: auto;
           flex: 0 0 auto;
         }
@@ -231,41 +236,48 @@ class HueSceneRail extends HTMLElement {
           position: relative;
           display: inline-flex;
           align-items: center;
-          gap: 6px;
+          gap: 5px;
           height: 32px;
-          padding: 0 7px;
-          border: 2px solid transparent;
-          border-radius: 18px;
+          padding: 0 6px;
+          border: none;
+          border-radius: 16px;
           background: var(--card-background-color);
           color: var(--secondary-text-color);
           font: inherit;
-          font-size: 13px;
+          font-size: 12px;
+          font-weight: 500;
           cursor: pointer;
           white-space: nowrap;
-          transition: border-color 120ms ease, padding 140ms ease;
+          transition: padding 140ms ease, filter 160ms ease;
         }
         .chip ha-icon { --mdc-icon-size: 18px; flex: 0 0 auto; }
         .chip .chip-name {
           max-width: 0;
           overflow: hidden;
+          text-overflow: ellipsis;
           opacity: 0;
           transition: max-width 160ms ease, opacity 140ms ease;
         }
-        .chip.expanded .chip-name { max-width: 92px; opacity: 1; }
-        .chip.active { border-color: var(--primary-text-color); }
-        /* The adaptive scene is the one to reach for first, so it always
-           carries its label and sits apart from the presets. */
-        .chip.auto { font-weight: 500; margin-right: 4px; }
+        /* Exactly one chip is ever named: the live one. The halo separates it
+           from its neighbours so the ring reads at a glance. */
+        .chip.expanded .chip-name { max-width: 56px; opacity: 1; }
+        .chip.active {
+          outline: 2px solid var(--primary-text-color);
+          outline-offset: 1px;
+        }
+        /* The adaptive scene leads the rail and keeps the day's gradient, but
+           only burns bright when it is actually driving. */
+        .chip.auto { margin-right: 3px; }
+        .chip.auto.muted { filter: saturate(0.4) opacity(0.65); }
         .chip.auto::after {
           content: "";
           position: absolute;
-          right: -6px;
+          right: -5px;
           width: 1px;
-          height: 20px;
+          height: 18px;
           background: var(--primary-text-color);
           opacity: 0.18;
         }
-        .chips { position: relative; }
         .power {
           position: relative;
           flex: 0 0 auto;
@@ -286,7 +298,7 @@ class HueSceneRail extends HTMLElement {
         .power.on { color: var(--state-light-active-color, var(--primary-color)); }
       </style>
       <div class="rail">
-        <div class="fill"></div>
+        <div class="track"></div>
         <button class="power" data-kind="power" title="Toggle room">
           <ha-icon icon="mdi:power"></ha-icon>
         </button>
@@ -297,7 +309,7 @@ class HueSceneRail extends HTMLElement {
 
     this._railEl = root.querySelector(".rail");
     this._powerEl = root.querySelector(".power");
-    this._fillEl = root.querySelector(".fill");
+    this._trackEl = root.querySelector(".track");
     this._labelEl = root.querySelector(".label");
     this._chipsEl = root.querySelector(".chips");
 
@@ -340,7 +352,7 @@ class HueSceneRail extends HTMLElement {
     const width = this._railEl.getBoundingClientRect().width || 1;
     const pct = Math.max(MIN_BRIGHTNESS_PCT, Math.min(100, drag.startPct + (dx / width) * 100));
     drag.pct = pct;
-    this._fillEl.style.width = `${pct}%`;
+    this._trackEl.style.width = `${pct}%`;
 
     const now = Date.now();
     if (now - this._lastSent > THROTTLE_MS) {
@@ -415,7 +427,7 @@ class HueSceneRail extends HTMLElement {
             : "var(--card-background-color)";
           const fg = gradient.length ? this._chipColours(gradient[0]) : "var(--primary-text-color)";
           return `
-            <button class="chip auto expanded ${autoOn ? "active" : ""}" data-kind="scene"
+            <button class="chip auto ${autoOn ? "expanded active" : "muted"}" data-kind="scene"
                     data-entity="${this._config.smart_scene}"
                     style="background:${bg};color:${fg}" title="${entry.label}">
               <ha-icon icon="${entry.icon}"></ha-icon>
@@ -447,7 +459,8 @@ class HueSceneRail extends HTMLElement {
     this._powerEl.hidden = this._config.power === false;
 
     const pct = this._currentBrightnessPct();
-    this._fillEl.style.width = pct === null ? "0%" : `${pct}%`;
+    this._trackEl.style.width = pct === null ? "0%" : `${pct}%`;
+    this._trackEl.hidden = pct === null;
   }
 }
 

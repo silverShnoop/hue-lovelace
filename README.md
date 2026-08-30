@@ -14,15 +14,18 @@ One row per room, about 46px tall.
 
 - A **power button** at the left toggles the room.
 - The adaptive all-day scene (Hue's "Golden hours" and friends) leads the rail,
-  rendered as a gradient across the whole day's palette and always carrying its
-  label, so it reads as the one to reach for first. It is a button, not a
+  carrying the day's full palette as a gradient and set apart by a hairline, so
+  it reads as the one to reach for first. It dims to a muted version of that
+  gradient when it is not the scene actually driving. It is a button, not a
   toggle — see the note below.
 - Every other scene is a **button**, an icon on that scene's own colour.
-- Whichever scene is live is **ringed**, and presets **expand to show their
-  name** while they are the active one; the rest stay icon-only.
-- **Dragging the row dims**, and only touches the bulbs the scene left on — not
-  the room group, which would drag along every bulb the scene deliberately
-  turned off.
+- **Exactly one chip is ever named:** the live one, which expands to show its
+  scene and takes a ringed halo. Everything else stays a bare icon, so there is
+  never a question of which of two labels is the current state.
+- **Dragging the row dims.** Brightness shows as a track along the bottom edge
+  — visible, so the gesture advertises itself — and only touches the bulbs the
+  scene left on, not the room group, which would drag along every bulb the
+  scene deliberately turned off.
 
 Scene colours are read from the schedule sensor's timeslots rather than
 configured, so the rail follows whatever the bridge reports.
@@ -73,6 +76,13 @@ bridge already behaves, and you turn the room off with the power button.
 
 Dimming is relative to where the drag started, so touching the row never jumps
 the brightness. Movement under 8px counts as a tap.
+
+The row is budgeted to fit seven chips plus a power button on a phone. The
+active chip's ring is drawn with `outline` rather than a border so it costs no
+layout width and never reflows the row. On a narrow screen the room label is
+the first thing to give, truncating with an ellipsis; if that bothers you,
+either list fewer scenes or drop `name` where the room is already obvious from
+context.
 
 ## Installing
 
